@@ -22,7 +22,7 @@ def loadReposFromFile(gh_user, filename = "repos.txt"):
     with open(filename, 'r') as reposFile:
         for repo in reposFile:
             repo = repo.strip()
-            print(repo)
+            print("Loading {}...".format(repo))
             if repo:
                 repos.append(gh_user.get_repo(repo))
     return repos
@@ -38,25 +38,54 @@ def getCommits(gh_user, repo):
         isMe = commit.commit.author.name == name 
         if isMe:
             dates.append(commit.commit.committer.date)
-            print("Found commit", commit.commit)
     return dates
 
-
-if __name__ == "__main__":
-    g = Github("923fef7126fc2150e1eb4f8ac40a02acbd06790e")
-    gh_user = g.get_user()
+# Counts the number of consecutive days committing starting from today
+# params: Gh - the Github object
+# params: repos - a list of repositories to search for commits
+# returns: a streak >= 0 as an Integer
+def count_commit_streak(Gh, repos):
+    gh_user = Gh.get_user()
     dates = []
-    repos = []
 
-    if not os.path.exists('repos.txt'):
-        loadReposFromFile(gh_user)
-    else:
-        if input("Define repos? Press enter to skip."):
-            saveReposToFile(gh_user)
-
-    for repo in loadReposFromFile(gh_user): 
+    for repo in repos:
         dates.extend(getCommits(gh_user, repo))
 
-    dates = sorted(dates, reverse=True)
-    print(dates[0].date(), dates[1].date())
-    print(dates[0] - dates[1])
+    dates = [date.date() for date in sorted(dates, reverse=True)]
+    today = datetime.date(datetime.now())
+    
+    count = 1 if today in dates else 0
+    today -= timedelta(days=1)
+
+    while(True):
+        # Did we make a commit today?
+        if today in dates:
+            count += 1
+        else:
+            break
+        # Subtract one day
+        today -= timedelta(days=1)
+
+    return count
+
+    
+
+if __name__ == "__main__":
+    oauth = ""
+    with open("oauth.txt", 'r') as oauthFile:
+        oauth = oauthFile.readline().strip()
+
+    g = Github(oauth)
+    gh_user = g.get_user()
+
+    if not os.path.exists('repos.txt'):
+        saveReposToFile(gh_user)
+    else:
+        if input("Define repos? Press enter to skip. "):
+            saveReposToFile(gh_user)
+
+    repos = loadReposFromFile(gh_user) 
+
+    count = count_commit_streak(g, repos)
+
+    print("{} consectutive days contributing to Github!".format(count))

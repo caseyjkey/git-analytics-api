@@ -11,7 +11,10 @@ def loadRepos(Gh, repos):
     gh_user = Gh.get_user()
     return [gh_user.get_repo(repo) for repo in repos]
         
-
+# Counts number of commits in a repo for a given Github user object
+# params: gh_user - The object returned by GithubObject.get_user()
+# params: repo - a Repository object
+# returns: a list of datetime dates
 def getCommits(gh_user, repo):
     username = gh_user.login
     name = gh_user.name

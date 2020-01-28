@@ -3,7 +3,12 @@
   "app_name": "chalice-ga",
   "stages": {
     "dev": {
-      "api_gateway_stage": "api"
+      "api_gateway_stage": "api",
+      "manage_iam_role": true,
+
+      "environment_variables": {
+
+      }
     }
   }
 }

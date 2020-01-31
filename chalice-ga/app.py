@@ -2,31 +2,10 @@ from chalice import Chalice, Response
 from github import Github
 from datetime import datetime, timedelta
 import os.path
+import os
 
+gh_token = os.environ['TOKEN']
 
-def saveReposToFile(gh_user):
-    repos = gh_user.get_repos()
-    
-    for index, repo in enumerate(repos):
-        print('{}: {}'.format(index, repo.name))
-    selectedRepos = input("Enter the repos you want to track seperated by commas: ")
-    indexes = [int(index) for index in selectedRepos.replace(' ', '').split(',')]
-    repos = [repo for index, repo in enumerate(repos) if index in indexes]
-
-    with open("repos.txt", 'w') as reposFile:
-        for repo in repos:
-            reposFile.write(repo.name + '\n')
-
-
-def loadReposFromFile(gh_user, filename = "repos.txt"):
-    repos = []
-    with open(filename, 'r') as reposFile:
-        for repo in reposFile:
-            repo = repo.strip()
-            print("Loading {}...".format(repo))
-            if repo:
-                repos.append(gh_user.get_repo(repo))
-    return repos
 
 def loadRepos(Gh, repos):
     gh_user = Gh.get_user()
@@ -78,8 +57,8 @@ def count_commit_streak(Gh, repos):
 app = Chalice(app_name='chalice-ga')
 
 # '/ouath_token/repo1,repo2,repo3'
-@app.route('/streak/{token}/{repos}')
-def github_streak_given_repos(token, repos):
-    g = Github(token)
+@app.route('/streak/{repos}')
+def github_streak_given_repos(repos):
+    g = Github(gh_token)
     repos = loadRepos(g, repos.split(','))
-    return Response(status_code=200, body={"streak": {g.get_user().name: count_commit_streak(g, repos)}})
+    return Response(status_code=200, body={"streak": {"days": count_commit_streak(g, repos)}})

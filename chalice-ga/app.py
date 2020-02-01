@@ -56,8 +56,8 @@ def count_commit_streak(Gh, repos):
 
 app = Chalice(app_name='chalice-ga')
 
-# '/ouath_token/repo1,repo2,repo3'
-@app.route('/streak/{repos}')
+# '/streak/repo1,repo2,repo3'
+@app.route('/streak/{repos}', methods=['GET'], cors=True)
 def github_streak_given_repos(repos):
     g = Github(gh_token)
     repos = loadRepos(g, repos.split(','))

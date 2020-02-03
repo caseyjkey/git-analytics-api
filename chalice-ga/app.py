@@ -19,13 +19,13 @@ def getCommits(gh_user, repo):
     username = gh_user.login
     name = gh_user.name
     commits = repo.get_commits()
-    dates = []
+    myCommits = []
     print("{} total commits for {}".format(commits.totalCount, repo.name))
     for commit in commits:
         isMe = commit.commit.author.name == name 
         if isMe:
-            dates.append(commit.commit.committer.date)
-    return dates
+            myCommits.append(commit.commit) #committer.date)
+    return myCommits
 
 # Counts the number of consecutive days committing starting from today
 # params: Gh - the Github object
@@ -34,9 +34,12 @@ def getCommits(gh_user, repo):
 def count_commit_streak(Gh, repos):
     gh_user = Gh.get_user()
     dates = []
+    commits = []
 
     for repo in repos:
-        dates.extend(getCommits(gh_user, repo))
+        commits.extend(getCommits(gh_user, repo))
+        repoDates = [commit.committer.date for commit in getCommits(gh_user, repo)]
+        dates.extend(repoDates)
 
     dates = [date.date() for date in sorted(dates, reverse=True)]
     today = datetime.date(datetime.now())
@@ -53,7 +56,7 @@ def count_commit_streak(Gh, repos):
         # Subtract one day
         today -= timedelta(days=1)
 
-    return count
+    return (count, commits)
 
 
 
@@ -64,4 +67,4 @@ app = Chalice(app_name='chalice-ga')
 def github_streak_given_repos(repos):
     g = Github(gh_token)
     repos = loadRepos(g, repos.split(','))
-    return Response(status_code=200, body={"streak": {"days": count_commit_streak(g, repos)}})
+    return Response(status_code=200, body={"streak": {"days": count_commit_streak(g, repos)[0], "dates": [(str(commit.author.date), str(commit.committer.date)) for commit in count_commit_streak(g, repos)[1]]}})
